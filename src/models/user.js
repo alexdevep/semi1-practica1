@@ -1,21 +1,8 @@
+
+// Instancias de conexion con BD
 const mysql = require('mysql');
-
-/*
-connection = mysql.createConnection({
-    host: 'localhost',
-    user: 'root',
-    password:'Admin!3699',
-    database: 'testapimysql'
-});
-*/
-connection = mysql.createConnection({
-    host: 'mysqldb.cahzfivbuo9y.us-east-2.rds.amazonaws.com',
-    port: 3306,
-    user: 'admin',
-    password:'admin_mysql',
-    database: 'practica1'
-});
-
+const db_credentials = require('./db_creds');
+var connection = mysql.createPool(db_credentials);
 
 let userModel = {};
 
