@@ -70,8 +70,8 @@ app.put('/users/:id', (req, res) => {
 
     const userData = {
         id: null,
-        usuario: req.body.usuario,
-        nombre: req.body.nombre,
+        usuario: req.body.username,
+        nombre: req.body.name,
         password: req.body.password,
         foto: req.body.foto
     };
