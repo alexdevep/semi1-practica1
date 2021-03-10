@@ -28,6 +28,10 @@ app.use(bodyParser.json());
 
 // Routes
 
+app.get('/', (req, res) => {
+    res.status(200).json({"msg": "Conecto"});
+});
+
 //--------------------------------------------------BASE DE DATOS---------------------------------------*
 app.get('/users', (req, res) => {
     User.getUsers((err, data) => {
