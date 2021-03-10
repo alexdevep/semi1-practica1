@@ -20,7 +20,7 @@ var AWS = require('aws-sdk');
 const s3 = new AWS.S3(aws_keys.s3);
 
 // Settings
-app.set('port', process.env.PORT || 3000);
+app.set('port', process.env.PORT || 5000);
 
 // Middlewares
 app.use(morgan('dev'));
@@ -39,8 +39,8 @@ app.post('/users', (req, res) => {
         
     const userData = {
         id: null,
-        usuario: req.body.usuario,
-        nombre: req.body.nombre,
+        usuario: req.body.username,
+        nombre: req.body.name,
         password: req.body.password,
         foto: req.body.foto
     };
@@ -69,7 +69,7 @@ app.post('/users', (req, res) => {
 app.put('/users/:id', (req, res) => {
 
     const userData = {
-        id: null,
+        id: req.body._id,
         usuario: req.body.username,
         nombre: req.body.name,
         password: req.body.password,
@@ -231,7 +231,7 @@ app.post('/saveImageInfoDDB', (req, res) => {
 // Sin static files aun
 
 app.listen(app.get('port'), () => {
-    console.log('Server on port 3000');
+    console.log('Server on port 5000');
 });
 
 /*
