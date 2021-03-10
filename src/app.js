@@ -35,34 +35,15 @@ app.get('/users', (req, res) => {
     });
 });
 
-app.post('/users', (req, res) => {
+app.post('/login', (req, res) => {
         
     const userData = {
-        id: null,
         usuario: req.body.username,
-        nombre: req.body.name,
-        password: req.body.password,
-        foto: req.body.foto
+        password: req.body.password
     };
 
-    User.insertUser(userData, (err, data) => {
-        if (data &&  data.insertId) {
-            
-            console.log(data);
-
-            res.json({
-                success: true,
-                msg: 'Usuario insertado',
-                data: data
-            })
-        }
-        else 
-        {
-            res.status(500).json({
-                success: false,
-                msg: 'Error'
-            })
-        }
+    User.login(userData, (err, data) => {
+        res.status(200).json(data);
     })
 });
 
@@ -122,7 +103,7 @@ app.post('/subirfoto', function (req, res) {
         let buff = new Buffer.from(foto, 'base64');
 
         const params = {
-            Bucket: "s1bucket-practica1",
+            Bucket: "practica1-g18-imagenes",
             Key: nombrei,
             Body: buff,
             ContentType: "image",
@@ -143,7 +124,7 @@ app.post('/obtenerfoto', function (req, res) {
     //direcccion donde esta el archivo a obtener
     var nombrei = "Fotos_Perfil/" + id + ".jpg";
     var getParams = {
-        Bucket: 's1bucket-practica1',
+        Bucket: 'practica1-g18-imagenes',
         Key: nombrei
     }
     s3.getObject(getParams, function (err, data) {
@@ -178,7 +159,7 @@ app.post('/saveImageInfoDDB', (req, res) => {
     let filename = `${name}-${uuid()}.${extension}`; //uuid() genera un id unico para el archivo en s3
 
     //Parámetros para S3
-    let bucketname = 's1bucket-practica1';
+    let bucketname = 'practica1-g18-imagenes';
     let folder = 'Fotos_Perfil/';
     let filepath = `${folder}${filename}`;
     var uploadParamsS3 = {
@@ -251,7 +232,7 @@ app.put('/editUserInfo/:id', (req, res) => {
     let filename = `${name}-${uuid()}.${extension}`; //uuid() genera un id unico para el archivo en s3
 
     //Parámetros para S3
-    let bucketname = 's1bucket-practica1';
+    let bucketname = 'practica1-g18-imagenes';
     let folder = 'Fotos_Perfil/';
     let filepath = `${folder}${filename}`;
     var uploadParamsS3 = {

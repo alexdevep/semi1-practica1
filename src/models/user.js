@@ -27,6 +27,34 @@ userModel.getUsers = (callback) => {
     }
 };
 
+userModel.login = (userData, callback) => {
+    if (connection){
+        //console.log('SI CONECTO!');
+        const sql = `
+            SELECT * FROM users
+            WHERE usuario = ${connection.escape(userData.usuario)}
+            AND password = ${connection.escape(userData.password)}
+        `;
+        //console.log(sql);
+
+        connection.query(
+            sql, (err, rows) => {
+                //console.log('resultado: ' + rows)
+                if (err) {
+                    throw err;
+                }
+                else{
+                    //callback => res.json...
+                    callback(null, rows);
+                }
+            }
+        )
+    }
+    else {
+        //console.log('NO CONECTO!');
+    }
+};
+
 userModel.insertUser = (userData, callback) => {
     if (connection) {
         connection.query(
