@@ -68,8 +68,9 @@ app.post('/users', (req, res) => {
 
 app.put('/users/:id', (req, res) => {
 
+    //console.log(req.body);
     const userData = {
-        id: req.body._id,
+        id: req.params.id,
         usuario: req.body.username,
         nombre: req.body.name,
         password: req.body.password,
@@ -155,7 +156,7 @@ app.post('/obtenerfoto', function (req, res) {
     });
 });
 
-//subir foto y guardar en dynamo
+//subir foto y guardar en mysql
 app.post('/saveImageInfoDDB', (req, res) => {
     let body = req.body;
 
@@ -195,11 +196,11 @@ app.post('/saveImageInfoDDB', (req, res) => {
 
         } else {
 
-            console.log('Upload success at:', data.Location);
+            //console.log('Upload success at:', data.Location);
             
             userData.foto = filepath;
 
-            console.log('Info:', userData);
+            //console.log('Info:', userData);
         
             User.insertUser(userData, (err, data) => {
                 if (data &&  data.insertId) {
@@ -223,6 +224,68 @@ app.post('/saveImageInfoDDB', (req, res) => {
                 }
             })
 
+        }
+    });
+});
+
+app.put('/editUserInfo/:id', (req, res) => {
+    let body = req.body;
+
+    //console.log(body);
+
+    const userData = {
+        id: req.params.id,
+        usuario: req.body.username,
+        nombre: req.body.name,
+        password: req.body.password,
+        foto: req.body.foto
+    };
+    
+    let name = body.username;
+    let base64String = body.image;
+    let extension = body.extension;
+
+    //Decodificar imagen
+    let encodedImage = base64String;
+    let decodedImage = Buffer.from(encodedImage, 'base64');
+    let filename = `${name}-${uuid()}.${extension}`; //uuid() genera un id unico para el archivo en s3
+
+    //Parámetros para S3
+    let bucketname = 's1bucket-practica1';
+    let folder = 'Fotos_Perfil/';
+    let filepath = `${folder}${filename}`;
+    var uploadParamsS3 = {
+        Bucket: bucketname,
+        Key: filepath,
+        Body: decodedImage,
+        ACL: 'public-read',
+    };
+
+    s3.upload(uploadParamsS3, function sync(err, data) {
+        if (err) {
+
+            console.log('Error uploading file:', err);
+            res.send({ 'message': 's3 failed' })
+
+        } else {
+
+            //console.log('Upload success at:', data.Location);
+            
+            userData.foto = filepath;
+
+            //console.log('Info:', userData);
+
+            User.updateUser(userData, (err, data) => {
+                if (data && data.msg){
+                    res.json(data)
+                }
+                else{
+                    res.json({
+                        success: false,
+                        msg: 'error'
+                    })
+                }
+            })
         }
     });
 });

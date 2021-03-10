@@ -65,10 +65,21 @@ userModel.updateUser = (userData, callback) => {
                 throw err;
             } 
             else{
-                //callback => res.json...
-                callback(null, {
-                    "msg": "success"
-                });
+                console.log('Registros modificados: '+result.changedRows);
+
+                if(result.changedRows > 0){
+                    //callback => res.json...
+                    callback(null, {
+                        "msg": "success"
+                    });
+                }
+                else{
+                    //callback => res.json...
+                    callback(null, {
+                        "msg": "failed"
+                    });
+                }
+                
             }
         })
     }
