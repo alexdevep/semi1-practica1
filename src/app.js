@@ -18,6 +18,12 @@ const User = require('./models/user');
 var AWS = require('aws-sdk');
 //instanciamos los servicios a utilizar con sus respectivos accesos.
 const s3 = new AWS.S3(aws_keys.s3);
+const bucket = "practica1-g18-imagenes";
+const client = new AWS.Rekognition({ 
+        accessKeyId: aws_keys.rekognition.accessKeyId,
+        secretAccessKey: aws_keys.rekognition.secretAccessKey,
+        region: aws_keys.rekognition.region
+    });
 
 // Settings
 app.set('port', process.env.PORT || 5000);
@@ -107,7 +113,7 @@ app.post('/subirfoto', function (req, res) {
         let buff = new Buffer.from(foto, 'base64');
 
         const params = {
-            Bucket: "practica1-g18-imagenes",
+            Bucket: bucket,
             Key: nombrei,
             Body: buff,
             ContentType: "image",
@@ -123,20 +129,91 @@ app.post('/subirfoto', function (req, res) {
 });
 
 //obtener foto en s3
-app.post('/obtenerfoto', function (req, res) {
+app.post('/getPhoto', function (req, res) {
     var id = req.body.id;
-    //direcccion donde esta el archivo a obtener
-    var nombrei = "Fotos_Perfil/" + id + ".jpg";
+    var dataBase64;
     var getParams = {
-        Bucket: 'practica1-g18-imagenes',
-        Key: nombrei
+        Bucket: bucket,
+        Key: id
     }
     s3.getObject(getParams, function (err, data) {
         if (err)
         res.json({ mensaje: "error" })
-        //de bytes a base64
-        var dataBase64 = Buffer.from(data.Body).toString('base64');
+        dataBase64 = Buffer.from(data.Body).toString('base64');
         res.json({ mensaje: dataBase64 })
+
+    });
+});
+
+app.post('/loginFace', function (req, res){
+    User.getUsers((err, data) => {
+        var foto = "vacio"; //Nombre de la foto actual del usuario a buscar
+        var i;
+        var foto2 = req.body.foto;  //Contendrá los bytes de la captura tomada por la web cam
+
+        for (i = 0; i<data.length; i++)
+        {
+            if(data[i].usuario == req.body.username){
+                foto = data[i].foto;
+                break;
+            }
+        }
+
+        if (foto != "vacio")
+        {
+            const params = {
+                SourceImage: {
+                    //Bytes: dataBase64,
+                    S3Object: {
+                        Bucket: bucket,
+                        Name: foto
+                    },
+                },
+                TargetImage: {
+                    //Bytes: aquí irían los bytes del req.body.foto.
+                    S3Object: {
+                        Bucket: bucket,
+                        Name: foto2     //Comentar esto, cuando se manden los bytes
+                    },
+                },
+                SimilarityThreshold: 0 //Para que retorne algo, sino F
+                }
+    
+            client.compareFaces(params, function(err, response) {
+                if (err) {
+                    console.log(err, err.stack); 
+                } else {
+                    response.FaceMatches.forEach(data2 => {
+                    let position   = data2.Face.BoundingBox
+                    let similarity = data2.Similarity
+                    console.log(`The face at: ${position.Left}, ${position.Top} matches with ${similarity} % confidence`)
+
+                    if( similarity >= 75)
+                    {
+                        console.log("La captura coincide con la foto actual");
+                        res.status(200).json(data[i]);
+                    }
+                    else{
+                        console.log("La captura no coincide con la foto actual");
+                        res.json({mensaje: 0});
+                    }
+                    }) // for response.faceDetails
+                } // if
+            });
+        }
+        else
+        {
+            console.log("User doesn't exist");
+            res.json({mensaje: 0});
+        }
+        
+        //P O R   S I   T E   S I   S E R V E   P A P U !
+        //Esto te puede servir para convertir la base64 a bytes desde el frontend
+        // const base64Data = req.body.foto;
+        // const base64 = await fetch(base64Data);
+        // const base64Response = await fetch(`data:image/png;base64,${base64Data}`);
+        // const dataBase64_2 = await base64Response.blob();
+        //Supuestamente lo convierte a blob que me puede servir. Espero te ayude PAPU
 
     });
 });
@@ -163,7 +240,7 @@ app.post('/saveImageInfoDDB', (req, res) => {
     let filename = `${name}-${uuid()}.${extension}`; //uuid() genera un id unico para el archivo en s3
 
     //Parámetros para S3
-    let bucketname = 'practica1-g18-imagenes';
+    let bucketname = bucket;
     let folder = 'Fotos_Perfil/';
     let filepath = `${folder}${filename}`;
     var uploadParamsS3 = {
@@ -236,7 +313,7 @@ app.put('/editUserInfo/:id', (req, res) => {
     let filename = `${name}-${uuid()}.${extension}`; //uuid() genera un id unico para el archivo en s3
 
     //Parámetros para S3
-    let bucketname = 'practica1-g18-imagenes';
+    let bucketname = bucket;
     let folder = 'Fotos_Perfil/';
     let filepath = `${folder}${filename}`;
     var uploadParamsS3 = {
