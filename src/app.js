@@ -19,11 +19,11 @@ var AWS = require('aws-sdk');
 //instanciamos los servicios a utilizar con sus respectivos accesos.
 const s3 = new AWS.S3(aws_keys.s3);
 const bucket = "practica1-g18-imagenes";
-const client = new AWS.Rekognition({ 
-        accessKeyId: aws_keys.rekognition.accessKeyId,
-        secretAccessKey: aws_keys.rekognition.secretAccessKey,
-        region: aws_keys.rekognition.region
-    });
+const client = new AWS.Rekognition({
+    accessKeyId: aws_keys.rekognition.accessKeyId,
+    secretAccessKey: aws_keys.rekognition.secretAccessKey,
+    region: aws_keys.rekognition.region
+});
 
 // Settings
 app.set('port', process.env.PORT || 5000);
@@ -35,7 +35,7 @@ app.use(bodyParser.json());
 // Routes
 
 app.get('/', (req, res) => {
-    res.status(200).json({"msg": "Conecto"});
+    res.status(200).json({ "msg": "Conecto" });
 });
 
 //--------------------------------------------------BASE DE DATOS---------------------------------------*
@@ -46,7 +46,7 @@ app.get('/users', (req, res) => {
 });
 
 app.post('/login', (req, res) => {
-        
+
     const userData = {
         usuario: req.body.username,
         password: req.body.password
@@ -69,10 +69,10 @@ app.put('/users/:id', (req, res) => {
     };
 
     User.updateUser(userData, (err, data) => {
-        if (data && data.msg){
+        if (data && data.msg) {
             res.json(data)
         }
-        else{
+        else {
             res.json({
                 success: false,
                 msg: 'error'
@@ -83,13 +83,13 @@ app.put('/users/:id', (req, res) => {
 
 app.delete('/users/:id', (req, res) => {
     User.deleteUser(req.params.id, (err, data) => {
-        if(data && data.msg === 'deleted' || data.msg === 'not exists'){
+        if (data && data.msg === 'deleted' || data.msg === 'not exists') {
             res.json({
                 success: true,
                 data
             })
         }
-        else{
+        else {
             res.status(500).json({
                 msg: 'Error'
             })
@@ -124,7 +124,7 @@ app.post('/subirfoto', function (req, res) {
         res.json({ mensaje: "Exito", success: true })
     }
     catch (e) {
-        res.json({ mensaje: "Fallo al subir imagen" , success: false })
+        res.json({ mensaje: "Fallo al subir imagen", success: false })
     }
 });
 
@@ -138,83 +138,114 @@ app.post('/getPhoto', function (req, res) {
     }
     s3.getObject(getParams, function (err, data) {
         if (err)
-        res.json({ mensaje: "error" })
+            res.json({ mensaje: "error" })
         dataBase64 = Buffer.from(data.Body).toString('base64');
         res.json({ mensaje: dataBase64 })
 
     });
 });
 
-app.post('/loginFace', function (req, res){
+
+app.post('/loginFace', function (req, res) {
     User.getUsers((err, data) => {
         var foto = "vacio"; //Nombre de la foto actual del usuario a buscar
         var i;
+        var extension = "jpg";
         var foto2 = req.body.foto;  //Contendrá los bytes de la captura tomada por la web cam
 
-        for (i = 0; i<data.length; i++)
-        {
-            if(data[i].usuario == req.body.username){
+        //Búsqueda del usuario
+        for (i = 0; i < data.length; i++) {
+            if (data[i].usuario == req.body.username) {
                 foto = data[i].foto;
                 break;
             }
         }
 
-        if (foto != "vacio")
-        {
-            const params = {
-                SourceImage: {
-                    //Bytes: dataBase64,
-                    S3Object: {
-                        Bucket: bucket,
-                        Name: foto
-                    },
-                },
-                TargetImage: {
-                    //Bytes: aquí irían los bytes del req.body.foto.
-                    S3Object: {
-                        Bucket: bucket,
-                        Name: foto2     //Comentar esto, cuando se manden los bytes
-                    },
-                },
-                SimilarityThreshold: 0 //Para que retorne algo, sino F
-                }
-    
-            client.compareFaces(params, function(err, response) {
-                if (err) {
-                    console.log(err, err.stack); 
-                } else {
-                    response.FaceMatches.forEach(data2 => {
-                    let position   = data2.Face.BoundingBox
-                    let similarity = data2.Similarity
-                    console.log(`The face at: ${position.Left}, ${position.Top} matches with ${similarity} % confidence`)
+        if (foto != "vacio") {
+            //Subir imagen a S3
+            let name = data[i].usuario;
+            let decodedImage = Buffer.from(foto2, 'base64');
+            let filename = `${name}-${uuid()}.${extension}`;
+            let folder = 'Fotos_Perfil/';
+            let filepath = `${folder}${filename}`;
+            const params_ = {
+                Bucket: bucket,
+                Key: filepath,
+                Body: decodedImage,
+                ContentType: "image",
+                ACL: 'public-read'
+            };
+            console.log(filepath);
 
-                    if( similarity >= 75)
-                    {
-                        console.log("La captura coincide con la foto actual");
-                        res.status(200).json(data[i]);
+            s3.upload(params_, function sync(err, datas) {
+                if (err) {
+                    console.log('Error uploading file:', err);
+                    res.send({ 'message': 's3 failed' })
+
+                } else {
+                    console.log("Comparando fotos:");
+                    console.log(foto);
+                    console.log(filepath);
+
+                    //Proceso de comparación
+                    const params = {
+                        SourceImage: {
+                            //Bytes: dataBase64,
+                            S3Object: {
+                                Bucket: bucket,
+                                Name: foto
+                            },
+                        },
+                        TargetImage: {
+                            //Bytes: blob,//aquí irían los bytes del req.body.foto.
+                            S3Object: {
+                                Bucket: bucket,
+                                Name: filepath  //Comentar esto, cuando se manden los bytes
+                            },
+                        },
+                        SimilarityThreshold: 0  //Para que retorne algo, sino F
                     }
-                    else{
-                        console.log("La captura no coincide con la foto actual");
-                        res.json({mensaje: 0});
-                    }
-                    }) // for response.faceDetails
-                } // if
+
+                    client.compareFaces(params, function (err, response) {
+                        if (err) {
+                            console.log(err, err.stack);
+                        } else {
+                            response.FaceMatches.forEach(data2 => {
+                                let position = data2.Face.BoundingBox
+                                let similarity = data2.Similarity
+                                console.log(`The face at: ${position.Left}, ${position.Top} matches with ${similarity} % confidence`)
+
+                                const paramsDelete = {
+                                    Bucket: bucket,
+                                    Key: filepath
+                                };
+
+                                if (similarity >= 75) {
+                                    console.log("La captura coincide con la foto actual");
+                                    res.status(200).json(data[i]);
+                                }
+                                else {
+                                    console.log("La captura no coincide con la foto actual");
+                                    res.json({ mensaje: 0 });
+                                }
+                                s3.deleteObject(paramsDelete, function (err, data) {
+                                    if (err) {
+                                        console.log(err, err.stack); // an error occurred
+                                    }
+                                    else {
+                                        console.log(data);           // successful response
+                                    }
+                                });
+                            }) // for response.faceDetails
+                        } // if
+                    });
+                }
             });
         }
-        else
-        {
+        else {
             console.log("User doesn't exist");
-            res.json({mensaje: 0});
+            res.json({ mensaje: 0 });
         }
-        
-        //P O R   S I   T E   S I   S E R V E   P A P U !
-        //Esto te puede servir para convertir la base64 a bytes desde el frontend
-        // const base64Data = req.body.foto;
-        // const base64 = await fetch(base64Data);
-        // const base64Response = await fetch(`data:image/png;base64,${base64Data}`);
-        // const dataBase64_2 = await base64Response.blob();
-        //Supuestamente lo convierte a blob que me puede servir. Espero te ayude PAPU
-
     });
 });
 
@@ -229,7 +260,7 @@ app.post('/saveImageInfoDDB', (req, res) => {
         password: req.body.password,
         foto: req.body.foto
     };
-    
+
     let name = body.username;
     let base64String = body.image;
     let extension = body.extension;
@@ -259,24 +290,23 @@ app.post('/saveImageInfoDDB', (req, res) => {
         } else {
 
             //console.log('Upload success at:', data.Location);
-            
+
             userData.foto = filepath;
 
             //console.log('Info:', userData);
-        
+
             User.insertUser(userData, (err, data) => {
-                if (data &&  data.insertId) {
-                    
+                if (data && data.insertId) {
+
                     console.log(data);
-        
+
                     res.json({
                         success: true,
                         msg: 'ddb success',
                         data: data
                     })
                 }
-                else 
-                {
+                else {
                     console.log(err);
 
                     res.status(500).json({
@@ -302,7 +332,7 @@ app.put('/editUserInfo/:id', (req, res) => {
         password: req.body.password,
         foto: req.body.foto
     };
-    
+
     let name = body.username;
     let base64String = body.image;
     let extension = body.extension;
@@ -332,16 +362,16 @@ app.put('/editUserInfo/:id', (req, res) => {
         } else {
 
             //console.log('Upload success at:', data.Location);
-            
+
             userData.foto = filepath;
 
             //console.log('Info:', userData);
 
             User.updateUser(userData, (err, data) => {
-                if (data && data.msg){
+                if (data && data.msg) {
                     res.json(data)
                 }
-                else{
+                else {
                     res.json({
                         success: false,
                         msg: 'error'
