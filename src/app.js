@@ -60,7 +60,7 @@ app.post('/login', (req, res) => {
 app.get('/getUser/:id', (req, res) => {
 
     const userData = {
-        usuario: req.params.id
+        id: req.params.id
     };
 
     User.getUser(userData, (err, data) => {
