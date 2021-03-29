@@ -57,6 +57,18 @@ app.post('/login', (req, res) => {
     })
 });
 
+app.post('/getUser', (req, res) => {
+
+    const userData = {
+        usuario: req.params.id
+    };
+
+    User.getUser(userData, (err, data) => {
+        res.status(200).json(data);
+    })
+});
+
+
 app.put('/users/:id', (req, res) => {
 
     //console.log(req.body);
@@ -183,9 +195,9 @@ app.post('/loginFace', function (req, res) {
                     res.send({ 'message': 's3 failed' })
 
                 } else {
-                    console.log("Comparando fotos:");
-                    console.log(foto);
-                    console.log(filepath);
+                    // console.log("Comparando fotos:");
+                    // console.log(foto);
+                    // console.log(filepath);
 
                     //Proceso de comparación
                     const params = {
