@@ -438,6 +438,7 @@ app.post('/createAlbum', function (req, res) {
     }
 });
 
+
 //------------------------------------------------------ GET ALBUM --------------------------------------------------
 app.get('/getAlbums/:id', (req, res) => {
 
@@ -450,6 +451,66 @@ app.get('/getAlbums/:id', (req, res) => {
         res.status(200).json(data);
     })
 });
+
+
+//--------------------------------------------------------- PHOTO ALBUM
+app.post('/photoAlbum', (req, res) => {
+    let body = req.body;
+    let name = body.username;
+    let base64String = body.foto;
+    let extension = body.extension;
+
+    //Decodificar imagen
+    let encodedImage = base64String;
+    let decodedImage = Buffer.from(encodedImage, 'base64');
+    let filename = `${name}-${uuid()}.${extension}`;
+
+    //Parámetros para S3
+    let bucketname = bucket;
+    let folder = 'Fotos_Publicadas/';
+    let filepath = `${folder}${filename}`;
+    var uploadParamsS3 = {
+        Bucket: bucketname,
+        Key: filepath,
+        Body: decodedImage,
+        ACL: 'public-read',
+    };
+
+    s3.upload(uploadParamsS3, function sync(err, data) {
+        if (err) {
+            console.log('Error uploading file:', err);
+            res.send({ 'message': 's3 failed' })
+        } else {
+            const photoAlbumData = {
+                id: null,
+                photo: filepath,
+                idAlbum: body.idAlbum
+            };
+
+            User.insertPhotoAlbum(photoAlbumData, (err, data) => {
+                if (data && data.insertId) {
+                    console.log(data);
+                    res.json({
+                        success: true,
+                        msg: 'ddb success',
+                        data: data
+                    })
+                }
+                else {
+                    console.log(err);
+
+                    res.status(500).json({
+                        success: false,
+                        msg: 'ddb failed'
+                    })
+                }
+            })
+
+        }
+    });
+});
+
+
 
 // Static files
 // Sin static files aun
