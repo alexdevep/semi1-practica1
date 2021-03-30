@@ -173,4 +173,24 @@ userModel.deleteUser = (id, callback) => {
     }
 };
 
+
+userModel.insertAlbum = (albumData, callback) => {
+    if (connection) {
+        connection.query(
+            'INSERT INTO album SET ?', albumData,
+            (err, result) => {
+                if(err) {
+                    callback(err);
+                }
+                else
+                {
+                    callback(null, {
+                        'insertId': result.insertId
+                    });
+                }
+            }
+        )
+    }
+};
+
 module.exports = userModel;

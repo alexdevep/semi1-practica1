@@ -38,13 +38,7 @@ app.get('/', (req, res) => {
     res.status(200).json({ "msg": "Conecto" });
 });
 
-//--------------------------------------------------BASE DE DATOS---------------------------------------*
-app.get('/users', (req, res) => {
-    User.getUsers((err, data) => {
-        res.status(200).json(data);
-    });
-});
-
+//-------------------------------------------------- AUTHENTIFICATION ---------------------------------------*
 app.post('/login', (req, res) => {
 
     const userData = {
@@ -55,106 +49,6 @@ app.post('/login', (req, res) => {
     User.login(userData, (err, data) => {
         res.status(200).json(data);
     })
-});
-
-app.get('/getUser/:id', (req, res) => {
-
-    const userData = {
-        id: req.params.id
-    };
-
-    User.getUser(userData, (err, data) => {
-        res.status(200).json(data);
-    })
-});
-
-
-app.put('/users/:id', (req, res) => {
-
-    //console.log(req.body);
-    const userData = {
-        id: req.params.id,
-        usuario: req.body.username,
-        nombre: req.body.name,
-        password: req.body.password,
-        foto: req.body.foto
-    };
-
-    User.updateUser(userData, (err, data) => {
-        if (data && data.msg) {
-            res.json(data)
-        }
-        else {
-            res.json({
-                success: false,
-                msg: 'error'
-            })
-        }
-    })
-});
-
-app.delete('/users/:id', (req, res) => {
-    User.deleteUser(req.params.id, (err, data) => {
-        if (data && data.msg === 'deleted' || data.msg === 'not exists') {
-            res.json({
-                success: true,
-                data
-            })
-        }
-        else {
-            res.status(500).json({
-                msg: 'Error'
-            })
-        }
-    });
-});
-
-//--------------------------------------------------ALMACENAMIENTO---------------------------------------
-
-//subir foto en s3
-app.post('/subirfoto', function (req, res) {
-
-    try {
-        var id = req.body.id;
-        var foto = req.body.foto;
-        //carpeta y nombre que quieran darle a la imagen
-
-        var nombrei = "Fotos_Perfil/" + id + ".jpg";
-        // en la base de datos guardar el nombrei
-        //se convierte la base64 a bytes
-        let buff = new Buffer.from(foto, 'base64');
-
-        const params = {
-            Bucket: bucket,
-            Key: nombrei,
-            Body: buff,
-            ContentType: "image",
-            ACL: 'public-read'
-        };
-        const putResult = s3.putObject(params).promise();
-        console.log(params);
-        res.json({ mensaje: "Exito", success: true })
-    }
-    catch (e) {
-        res.json({ mensaje: "Fallo al subir imagen", success: false })
-    }
-});
-
-//obtener foto en s3
-app.post('/getPhoto', function (req, res) {
-    var id = req.body.id;
-    var dataBase64;
-    var getParams = {
-        Bucket: bucket,
-        Key: id
-    }
-    s3.getObject(getParams, function (err, data) {
-        if (err)
-            res.json({ mensaje: "error" })
-        dataBase64 = Buffer.from(data.Body).toString('base64');
-        res.json({ mensaje: dataBase64 })
-
-    });
 });
 
 
@@ -261,6 +155,117 @@ app.post('/loginFace', function (req, res) {
     });
 });
 
+
+//------------------------------------------------- USERS ---------------------------------------
+app.get('/users', (req, res) => {
+    User.getUsers((err, data) => {
+        res.status(200).json(data);
+    });
+});
+
+
+app.get('/getUser/:id', (req, res) => {
+
+    const userData = {
+        id: req.params.id
+    };
+
+    User.getUser(userData, (err, data) => {
+        res.status(200).json(data);
+    })
+});
+
+
+app.put('/users/:id', (req, res) => {
+
+    //console.log(req.body);
+    const userData = {
+        id: req.params.id,
+        usuario: req.body.username,
+        nombre: req.body.name,
+        password: req.body.password,
+        foto: req.body.foto
+    };
+
+    User.updateUser(userData, (err, data) => {
+        if (data && data.msg) {
+            res.json(data)
+        }
+        else {
+            res.json({
+                success: false,
+                msg: 'error'
+            })
+        }
+    })
+});
+
+
+app.delete('/users/:id', (req, res) => {
+    User.deleteUser(req.params.id, (err, data) => {
+        if (data && data.msg === 'deleted' || data.msg === 'not exists') {
+            res.json({
+                success: true,
+                data
+            })
+        }
+        else {
+            res.status(500).json({
+                msg: 'Error'
+            })
+        }
+    });
+});
+
+
+//--------------------------------------------------ALMACENAMIENTO---------------------------------------
+//subir foto en s3
+app.post('/subirfoto', function (req, res) {
+
+    try {
+        var id = req.body.id;
+        var foto = req.body.foto;
+        //carpeta y nombre que quieran darle a la imagen
+
+        var nombrei = "Fotos_Perfil/" + id + ".jpg";
+        // en la base de datos guardar el nombrei
+        //se convierte la base64 a bytes
+        let buff = new Buffer.from(foto, 'base64');
+
+        const params = {
+            Bucket: bucket,
+            Key: nombrei,
+            Body: buff,
+            ContentType: "image",
+            ACL: 'public-read'
+        };
+        const putResult = s3.putObject(params).promise();
+        console.log(params);
+        res.json({ mensaje: "Exito", success: true })
+    }
+    catch (e) {
+        res.json({ mensaje: "Fallo al subir imagen", success: false })
+    }
+});
+
+//obtener foto en s3
+app.post('/getPhoto', function (req, res) {
+    var id = req.body.id;
+    var dataBase64;
+    var getParams = {
+        Bucket: bucket,
+        Key: id
+    }
+    s3.getObject(getParams, function (err, data) {
+        if (err)
+            res.json({ mensaje: "error" })
+        dataBase64 = Buffer.from(data.Body).toString('base64');
+        res.json({ mensaje: dataBase64 })
+
+    });
+});
+
+//------------------------------------------- sign up -----------------------------------
 //subir foto y guardar en mysql
 app.post('/saveImageInfoDDB', (req, res) => {
     let body = req.body;
@@ -392,6 +397,45 @@ app.put('/editUserInfo/:id', (req, res) => {
             })
         }
     });
+});
+
+
+// ------------------------------------------------------ ALBUMS -----------------------------------------------------
+app.post('/createAlbum', function (req, res) {
+    try {
+        const albumData = {
+            id: null,
+            name: req.body.name,
+            idUser: req.body.idUser
+        };
+        
+        User.insertAlbum(albumData, (err, data) => {
+            if (data && data.insertId) {
+                res.json({ mensaje: "Exito", success: true })
+            }
+            else if(err) {
+                res.json({ mensaje: "Error, el álbum ya existe para este usuario", success: false })
+            }
+            else {
+                if(data.length > 0){
+                    res.status(500).json({
+                        success: false,
+                        msg: 'Error, el álbum ya existe para este usuario'
+                    })
+               }
+               else{
+                res.status(500).json({
+                    success: false,
+                    msg: 'ddb failed'
+                })
+               }
+            }
+        })
+
+    }
+    catch (e) {
+        res.json({ mensaje: "Fallo al crear el álbum", success: false })
+    }
 });
 
 // Static files
