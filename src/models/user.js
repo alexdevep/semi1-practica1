@@ -239,6 +239,30 @@ userModel.getAlbums = (albumData, callback) => {
     }
 };
 
+
+userModel.getPhotos = (albumData, callback) => {
+    if (connection){
+        //console.log('SI CONECTO!');
+        const sql = `
+            SELECT * FROM photo_album
+            WHERE idAlbum = ${connection.escape(albumData.idAlbum)}
+            order by id asc
+        `;
+
+        connection.query(
+            sql, (err, rows) => {
+                if (err) {
+                    callback(err);
+                }
+                else{
+                    callback(null, rows);
+                }
+            }
+        )
+    }
+};
+
+
 userModel.insertPhotoAlbum = (albumData, callback) => {
     if (connection) {
         connection.query(

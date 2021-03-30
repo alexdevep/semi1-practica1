@@ -525,6 +525,20 @@ app.post('/photoAlbum', (req, res) => {
 
 
 
+app.get('/getPhotosAlbum', (req, res) => {
+    const albumData = {
+        idAlbum: req.body.idAlbum
+    };
+    console.log(albumData)
+
+    User.getPhotos(albumData, (err, data) => {
+        res.status(200).json(data);
+    })
+});
+
+
+
+
 // Static files
 // Sin static files aun
 
