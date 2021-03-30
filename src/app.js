@@ -452,6 +452,19 @@ app.get('/getAlbums/:id', (req, res) => {
     })
 });
 
+app.get('/getAlbum', (req, res) => {
+
+    const albumData = {
+        id: req.body.id
+    };
+    console.log(albumData)
+
+    User.getAlbums(albumData, (err, data) => {
+        res.status(200).json(data);
+    })
+});
+
+
 
 //--------------------------------------------------------- PHOTO ALBUM
 app.post('/photoAlbum', (req, res) => {

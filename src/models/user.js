@@ -194,6 +194,29 @@ userModel.insertAlbum = (albumData, callback) => {
 };
 
 
+userModel.getAlbum = (albumData, callback) => {
+    if (connection){
+        //console.log('SI CONECTO!');
+        const sql = `
+            SELECT * FROM album
+            WHERE id = ${connection.escape(albumData.id)}
+            order by id asc
+        `;
+
+        connection.query(
+            sql, (err, rows) => {
+                if (err) {
+                    callback(err);
+                }
+                else{
+                    callback(null, rows);
+                }
+            }
+        )
+    }
+};
+
+
 userModel.getAlbums = (albumData, callback) => {
     if (connection){
         //console.log('SI CONECTO!');
