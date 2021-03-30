@@ -459,7 +459,7 @@ app.get('/getAlbum', (req, res) => {
     };
     console.log(albumData)
 
-    User.getAlbums(albumData, (err, data) => {
+    User.getAlbum(albumData, (err, data) => {
         res.status(200).json(data);
     })
 });
