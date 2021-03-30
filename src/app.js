@@ -438,6 +438,19 @@ app.post('/createAlbum', function (req, res) {
     }
 });
 
+//------------------------------------------------------ GET ALBUM --------------------------------------------------
+app.get('/getAlbums/:id', (req, res) => {
+
+    const albumData = {
+        idUser: req.params.id
+    };
+    console.log(albumData)
+
+    User.getAlbums(albumData, (err, data) => {
+        res.status(200).json(data);
+    })
+});
+
 // Static files
 // Sin static files aun
 

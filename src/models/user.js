@@ -41,7 +41,7 @@ userModel.login = (userData, callback) => {
             sql, (err, rows) => {
                 //console.log('resultado: ' + rows)
                 if (err) {
-                    throw err;
+                    callback(err);
                 }
                 else{
                     //callback => res.json...
@@ -68,7 +68,7 @@ userModel.getUser = (userData, callback) => {
             sql, (err, rows) => {
                 //console.log('resultado: ' + rows)
                 if (err) {
-                    throw err;
+                    callback(err);
                 }
                 else{
                     //callback => res.json...
@@ -88,7 +88,7 @@ userModel.insertUser = (userData, callback) => {
             'INSERT INTO users SET ?', userData,
             (err, result) => {
                 if(err) {
-                    throw err;
+                    callback(err);
                 }
                 else
                 {
@@ -153,7 +153,7 @@ userModel.deleteUser = (id, callback) => {
                         `;
                 connection.query( sql, (err, result) => {
                     if (err) {
-                        throw err;
+                        callback(err);
                     }
                     else{
                         //callback => res.json...
@@ -192,5 +192,48 @@ userModel.insertAlbum = (albumData, callback) => {
         )
     }
 };
+
+
+userModel.getAlbums = (albumData, callback) => {
+    if (connection){
+        //console.log('SI CONECTO!');
+        const sql = `
+            SELECT * FROM album
+            WHERE idUser = ${connection.escape(albumData.idUser)}
+            order by id asc
+        `;
+
+        connection.query(
+            sql, (err, rows) => {
+                if (err) {
+                    callback(err);
+                }
+                else{
+                    callback(null, rows);
+                }
+            }
+        )
+    }
+};
+
+userModel.insertPhotoAlbum = (albumData, callback) => {
+    if (connection) {
+        connection.query(
+            'INSERT INTO photo_album SET ?', albumData,
+            (err, result) => {
+                if(err) {
+                    callback(err);
+                }
+                else
+                {
+                    callback(null, {
+                        'insertId': result.insertId
+                    });
+                }
+            }
+        )
+    }
+};
+
 
 module.exports = userModel;
