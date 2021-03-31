@@ -408,27 +408,27 @@ app.post('/createAlbum', function (req, res) {
             name: req.body.name,
             idUser: req.body.idUser
         };
-        
+
         User.insertAlbum(albumData, (err, data) => {
             if (data && data.insertId) {
                 res.json({ mensaje: "Exito", success: true })
             }
-            else if(err) {
+            else if (err) {
                 res.json({ mensaje: "Error, el álbum ya existe para este usuario", success: false })
             }
             else {
-                if(data.length > 0){
+                if (data.length > 0) {
                     res.status(500).json({
                         success: false,
                         msg: 'Error, el álbum ya existe para este usuario'
                     })
-               }
-               else{
-                res.status(500).json({
-                    success: false,
-                    msg: 'ddb failed'
-                })
-               }
+                }
+                else {
+                    res.status(500).json({
+                        success: false,
+                        msg: 'ddb failed'
+                    })
+                }
             }
         })
 
@@ -524,7 +524,6 @@ app.post('/photoAlbum', (req, res) => {
 });
 
 
-
 app.get('/getPhotosAlbum', (req, res) => {
     const albumData = {
         idAlbum: req.body.idAlbum
@@ -536,6 +535,82 @@ app.get('/getPhotosAlbum', (req, res) => {
     })
 });
 
+
+//--------------------------------------------------------- PROFILE ANALYSIS -----------------------------------------------------------
+app.post('/profileAnalysis', function (req, res) {
+    var params = {
+        Image: {
+            S3Object: {
+                Bucket: bucket,
+                Name: req.body.foto
+            }
+        },
+        Attributes: ['ALL']
+    };
+
+    client.detectFaces(params, function (err, response) {
+        var data_response = {}
+        if (err) {
+            console.log(err, err.stack);
+        } else {
+            response.FaceDetails.forEach(data => {
+                let low = data.AgeRange.Low
+                let high = data.AgeRange.High
+                console.log(`The detected face is between: ${low} and ${high} years old`)
+                console.log("EStos son los atributos que tenes acceder y mostrar papu:")
+                console.log(`  Age.Range.Low:          ${data.AgeRange.Low} - ${data.AgeRange.High}`)
+                data_response.ageRange = `${data.AgeRange.Low} - ${data.AgeRange.High}`
+                console.log(`  Gender.Confidence:      ${data.Gender.Value}`)
+                console.log(`  Gender.Confidence:      ${data.Gender.Confidence}`)
+                data_response.Gender = data.Gender.Value
+                if(data.Smile.Value){
+                    console.log(`  Smile.Confidence:       ${data.Smile.Confidence}`)
+                    data_response.Smile = "Smile"
+                }
+                if(data.Eyeglasses.Value){
+                    console.log(`  Eyeglasses.Confidence:  ${data.Eyeglasses.Confidence}`)
+                    data_response.Eyeglasses = "Eyeglasses"
+                }
+                if(data.Sunglasses.Value){
+                    console.log(`  Sunglasses.Confidence:  ${data.Sunglasses.Confidence}`)
+                    data_response.Sunglasses = "Sunglasses"
+                }
+                if(data.Beard.Value){
+                    console.log(`  Beard.Confidence:       ${data.Beard.Confidence}`)
+                    data_response.Beard = "Beard"
+                }
+                if(data.Mustache.Value){
+                    console.log(`  Mustache.Confidence:    ${data.Mustache.Confidence}`)
+                    data_response.Mustache = "Mustache"
+                }
+                if(data.EyesOpen.Value){
+                    console.log(`  EyesOpen.Confidence:    ${data.EyesOpen.Confidence}`)
+                    data_response.EyesOpen = "EyesOpen"
+                }
+                if(data.MouthOpen.Value){
+                    console.log(`  MouthOpen.Confidence:   ${data.MouthOpen.Confidence}`)
+                    data_response.MouthOpen = "MouthOpen"
+                }
+                var Emotions = []
+                for (var i = 0; i < data.Emotions.length; i++ )
+                {
+                    if(data.Emotions[i].Confidence > 70)
+                    {
+                        console.log(`  Emotions[${i}].Type:       ${data.Emotions[i].Type}`)
+                        console.log(`  Emotions[${i}].Confidence: ${data.Emotions[i].Confidence}`)
+                        var item = { "Type": data.Emotions[i].Type }
+                        Emotions.push(item);
+                    }
+                }
+                data_response.Emotions = Emotions
+                console.log("------------")
+                console.log("")
+                console.log(data_response)
+            })
+            res.status(200).json(data_response);
+        } // if
+    });
+});
 
 
 
