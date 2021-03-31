@@ -467,6 +467,7 @@ app.get('/getAlbum', (req, res) => {
 
 
 //--------------------------------------------------------- PHOTO ALBUM
+// Primera práctica
 app.post('/photoAlbum', (req, res) => {
     let body = req.body;
     let name = body.username;
@@ -524,6 +525,85 @@ app.post('/photoAlbum', (req, res) => {
 });
 
 
+// Segunda práctica
+app.post('/insertPhotoAlbum', (req, res) => {
+    let body = req.body;
+    let name = body.name;
+    let base64String = body.foto;
+    let extension = body.extension;
+
+    //Decodificar imagen
+    let encodedImage = base64String;
+    let decodedImage = Buffer.from(encodedImage, 'base64');
+    let filename = `${name}-${uuid()}.${extension}`;
+    //let filename = `${name}.${extension}`;
+
+    //Parámetros para S3
+    let bucketname = bucket;
+    let folder = 'Fotos_Publicadas/';
+    let filepath = `${folder}${filename}`;
+    var uploadParamsS3 = {
+        Bucket: bucketname,
+        Key: filepath,
+        Body: decodedImage,
+        ACL: 'public-read',
+    };
+
+    s3.upload(uploadParamsS3, function sync(err, data) {
+        if (err) {
+            console.log('Error uploading file:', err);
+            res.send({ 'message': 's3 failed' })
+        } else {
+            var params = {
+                Image: {
+                    S3Object: {
+                        Bucket: bucket,
+                        Name: filepath
+                    }
+                },
+                MaxLabels: 123,
+                MinConfidence: 75
+            };
+            
+            client.detectLabels(params, function (err, response){
+                if (err) {
+                    console.log(err, err.stack);
+                    res.json({ mensaje: "Error, al obtener los álbumes", success: false })
+                } else {
+                    console.log(response);
+                    res.status(200).json(response);
+                }
+            });
+            // const photoAlbumData = {
+            //     id: null,
+            //     photo: filepath,
+            //     description: body.description,
+            //     idAlbum: body.idAlbum
+            // };
+
+            // User.insertPhotoAlbum(photoAlbumData, (err, data) => {
+            //     if (data && data.insertId) {
+            //         console.log(data);
+            //         res.json({
+            //             success: true,
+            //             msg: 'ddb success',
+            //             data: data
+            //         })
+            //     }
+            //     else {
+            //         console.log(err);
+
+            //         res.status(500).json({
+            //             success: false,
+            //             msg: 'ddb failed'
+            //         })
+            //     }
+            // })
+        }
+    });
+});
+
+
 app.get('/getPhotosAlbum', (req, res) => {
     const albumData = {
         idAlbum: req.body.idAlbum
@@ -552,6 +632,7 @@ app.post('/profileAnalysis', function (req, res) {
         var data_response = {}
         if (err) {
             console.log(err, err.stack);
+            res.json({ mensaje: "Error al analizar la foto de perfil", success: false })
         } else {
             response.FaceDetails.forEach(data => {
                 let low = data.AgeRange.Low
@@ -563,39 +644,37 @@ app.post('/profileAnalysis', function (req, res) {
                 console.log(`  Gender.Confidence:      ${data.Gender.Value}`)
                 console.log(`  Gender.Confidence:      ${data.Gender.Confidence}`)
                 data_response.Gender = data.Gender.Value
-                if(data.Smile.Value){
+                if (data.Smile.Value) {
                     console.log(`  Smile.Confidence:       ${data.Smile.Confidence}`)
                     data_response.Smile = "Smile"
                 }
-                if(data.Eyeglasses.Value){
+                if (data.Eyeglasses.Value) {
                     console.log(`  Eyeglasses.Confidence:  ${data.Eyeglasses.Confidence}`)
                     data_response.Eyeglasses = "Eyeglasses"
                 }
-                if(data.Sunglasses.Value){
+                if (data.Sunglasses.Value) {
                     console.log(`  Sunglasses.Confidence:  ${data.Sunglasses.Confidence}`)
                     data_response.Sunglasses = "Sunglasses"
                 }
-                if(data.Beard.Value){
+                if (data.Beard.Value) {
                     console.log(`  Beard.Confidence:       ${data.Beard.Confidence}`)
                     data_response.Beard = "Beard"
                 }
-                if(data.Mustache.Value){
+                if (data.Mustache.Value) {
                     console.log(`  Mustache.Confidence:    ${data.Mustache.Confidence}`)
                     data_response.Mustache = "Mustache"
                 }
-                if(data.EyesOpen.Value){
+                if (data.EyesOpen.Value) {
                     console.log(`  EyesOpen.Confidence:    ${data.EyesOpen.Confidence}`)
                     data_response.EyesOpen = "EyesOpen"
                 }
-                if(data.MouthOpen.Value){
+                if (data.MouthOpen.Value) {
                     console.log(`  MouthOpen.Confidence:   ${data.MouthOpen.Confidence}`)
                     data_response.MouthOpen = "MouthOpen"
                 }
                 var Emotions = []
-                for (var i = 0; i < data.Emotions.length; i++ )
-                {
-                    if(data.Emotions[i].Confidence > 70)
-                    {
+                for (var i = 0; i < data.Emotions.length; i++) {
+                    if (data.Emotions[i].Confidence > 70) {
                         console.log(`  Emotions[${i}].Type:       ${data.Emotions[i].Type}`)
                         console.log(`  Emotions[${i}].Confidence: ${data.Emotions[i].Confidence}`)
                         var item = { "Type": data.Emotions[i].Type }
