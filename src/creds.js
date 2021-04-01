@@ -15,6 +15,11 @@ let aws_keys = {
         region: 'us-east-2',
         accessKeyId: "AKIAUFAWXK2WWLCNXOP2",
         secretAccessKey: "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" 
+    },
+    translate: {
+        region: 'us-east-2',
+        accessKeyId: "AKIAUFAWXK2WZCJ7ZS6R",
+        secretAccessKey: "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" 
     }
 }
 module.exports = aws_keys

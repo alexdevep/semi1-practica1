@@ -24,6 +24,7 @@ const client = new AWS.Rekognition({
     secretAccessKey: aws_keys.rekognition.secretAccessKey,
     region: aws_keys.rekognition.region
 });
+const translate = new AWS.Translate(aws_keys.translate);
 
 // Settings
 app.set('port', process.env.PORT || 5000);
@@ -452,6 +453,7 @@ app.get('/getAlbums/:id', (req, res) => {
     })
 });
 
+//Este no.
 app.get('/getAlbum', (req, res) => {
 
     const albumData = {
@@ -570,7 +572,23 @@ app.post('/insertPhotoAlbum', (req, res) => {
                     console.log(err, err.stack);
                     res.json({ mensaje: "Error, al obtener los álbumes", success: false })
                 } else {
-                    console.log(response);
+                    response.Labels .forEach(data => {
+                        console.log(`  Name:      ${data.Name}`);
+                        let text = data.Name
+                        let params = {
+                            SourceLanguageCode: 'auto',
+                            TargetLanguageCode: 'es',
+                            Text: text || 'Hello World'
+                        };
+                        translate.translateText(params, function (err, data) {
+                            if (err) {
+                            console.log(err, err.stack);
+                            } else {
+                            console.log(data);
+                            }
+                        });
+                    });
+
                     res.status(200).json(response);
                 }
             });
@@ -604,7 +622,7 @@ app.post('/insertPhotoAlbum', (req, res) => {
 });
 
 
-app.get('/getPhotosAlbum', (req, res) => {
+app.post('/getPhotosAlbum', (req, res) => {
     const albumData = {
         idAlbum: req.body.idAlbum
     };
