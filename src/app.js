@@ -595,7 +595,7 @@ app.post('/insertPhotoAlbum', (req, res) => {
                                     name: data.TranslatedText,
                                     idUser: body.idUser
                                 };
-                        
+
                                 User.insertAlbum(albumData, (err, data) => {
                                     // Descomentar esto si se desea ver el proceso de creación de album.
                                     // if (data && data.insertId) {
@@ -738,6 +738,26 @@ app.post('/profileAnalysis', function (req, res) {
     });
 });
 
+
+//----------------------------------------------------- TRANSLATE -------------------------------------------------
+app.post('/translate', function (req, res) {
+    //Los lenguajes que podes tener en tu combo-box son estos 5 amigo:
+    //es ->español, en ->inglés, fr ->francés, it ->italiano, zh ->chino
+    let text = req.body.text
+    let params = {
+        SourceLanguageCode: 'auto',
+        TargetLanguageCode: req.body.language || 'es',
+        Text: text || 'Hello World'
+    };
+    translate.translateText(params, function (err, data) {
+        if (err) {
+            console.log(err, err.stack);
+            res.json({ mensaje: "Error, lenguaje no encontrado" });
+        } else {
+            res.json({ mensaje: data.TranslatedText });
+        }
+    });
+});
 
 
 // Static files
