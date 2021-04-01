@@ -240,6 +240,30 @@ userModel.getAlbums = (albumData, callback) => {
 };
 
 
+//Para traer el album por id y nombre.
+userModel.getAlbumFilter = (albumData, callback) => {
+    if (connection){
+        //console.log('SI CONECTO!');
+        const sql = `
+            SELECT * FROM album
+            WHERE idUser = ${connection.escape(albumData.idUser)}
+            and name = ${connection.escape(albumData.name)}
+        `;
+
+        connection.query(
+            sql, (err, rows) => {
+                if (err) {
+                    callback(err);
+                }
+                else{
+                    callback(null, rows);
+                }
+            }
+        )
+    }
+};
+
+
 userModel.getPhotos = (albumData, callback) => {
     if (connection){
         //console.log('SI CONECTO!');

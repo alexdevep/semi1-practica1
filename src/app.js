@@ -566,14 +566,17 @@ app.post('/insertPhotoAlbum', (req, res) => {
                 MaxLabels: 123,
                 MinConfidence: 75
             };
-            
-            client.detectLabels(params, function (err, response){
+
+            //Detectamos los labels para crear los albumes de la foto
+            client.detectLabels(params, function (err, response) {
                 if (err) {
                     console.log(err, err.stack);
                     res.json({ mensaje: "Error, al obtener los álbumes", success: false })
                 } else {
-                    response.Labels .forEach(data => {
-                        console.log(`  Name:      ${data.Name}`);
+                    //Recorremos cada label
+                    response.Labels.forEach(data => {
+                        //console.log(`  Name:      ${data.Name}`);
+                        // Traducimos cada label, Si se tarda mucho. Comentar desde aquí
                         let text = data.Name
                         let params = {
                             SourceLanguageCode: 'auto',
@@ -582,41 +585,67 @@ app.post('/insertPhotoAlbum', (req, res) => {
                         };
                         translate.translateText(params, function (err, data) {
                             if (err) {
-                            console.log(err, err.stack);
-                            } else {
-                            console.log(data);
-                            }
-                        });
+                                console.log(err, err.stack);
+                            } else { //Hasta aca y las llaves de abajo
+                                //console.log(data.TranslatedText);
+
+                                //Proceso para la creacón de albumes
+                                const albumData = {
+                                    id: null,
+                                    name: data.TranslatedText,
+                                    idUser: body.idUser
+                                };
+                        
+                                User.insertAlbum(albumData, (err, data) => {
+                                    // Descomentar esto si se desea ver el proceso de creación de album.
+                                    // if (data && data.insertId) {
+                                    //     console.log("Si se creo el album");
+                                    // }
+                                    // else if (err) {
+                                    //     console.log("El album ya existe");
+                                    // }
+                                    // else {
+                                    //     if (data.length > 0) {
+                                    //         console.log("El album ta existe para este usuario");
+                                    //     }
+                                    //     else {
+                                    //         console.log("Falló");
+                                    //     }
+                                    // }
+                                    // console.log(albumData)
+
+
+                                    //Luego de la creación de albumes, se procede a obtener el id del album creado.
+                                    // Hago esto, porque me daba error al traer el id en el proceso anterior
+                                    User.getAlbumFilter(albumData, (err2, data3) => {
+                                        //console.log("Insertando foto en album");
+
+                                        //Procesos para insertar foto en cada album
+                                        const photoAlbumData = {
+                                            id: null,
+                                            photo: filepath,
+                                            description: body.description,
+                                            idAlbum: data3[0].id
+                                        };
+                                        User.insertPhotoAlbum(photoAlbumData, (err, data4) => {
+                                            if (data4 && data4.insertId) {
+                                                console.log(`Se insertó foto en el album: ${photoAlbumData.idAlbum}`)
+                                            }
+                                            else {
+                                                console.log("Hubo error papu :(");
+                                            }
+                                        })
+                                        //console.log("-")
+                                    });
+                                })
+                            } //Esta
+                        }); //Y esta comentar.
                     });
 
-                    res.status(200).json(response);
+                    //res.status(200).json(response);
+                    res.json({ mensaje: "Éxito", success: true })
                 }
             });
-            // const photoAlbumData = {
-            //     id: null,
-            //     photo: filepath,
-            //     description: body.description,
-            //     idAlbum: body.idAlbum
-            // };
-
-            // User.insertPhotoAlbum(photoAlbumData, (err, data) => {
-            //     if (data && data.insertId) {
-            //         console.log(data);
-            //         res.json({
-            //             success: true,
-            //             msg: 'ddb success',
-            //             data: data
-            //         })
-            //     }
-            //     else {
-            //         console.log(err);
-
-            //         res.status(500).json({
-            //             success: false,
-            //             msg: 'ddb failed'
-            //         })
-            //     }
-            // })
         }
     });
 });
