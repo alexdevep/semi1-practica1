@@ -760,6 +760,33 @@ app.post('/translate', function (req, res) {
 });
 
 
+// Analizar texto en imagen
+app.post('/detectText', function (req, res) {
+    var imagen = req.body.imagen;
+    var params = {
+        Image: {
+            Bytes: Buffer.from(imagen, 'base64')
+        }
+    };
+    client.detectText(params, function (err, data) {
+        if (err) { res.json({ mensaje: "Error" }) }
+        else {
+            console.log(data);
+            var data_response = {}
+            var Texts = []
+            data.TextDetections.forEach(response => {
+                var data = { "Text": response.DetectedText }
+                Texts.push(data);
+                console.log(response.DetectedText);
+            });
+            data_response.Texts = Texts;
+            console.log(data_response)
+            res.json({ Texts });
+        }
+    });
+});
+
+
 // Static files
 // Sin static files aun
 
