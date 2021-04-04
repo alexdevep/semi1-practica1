@@ -683,41 +683,95 @@ app.post('/profileAnalysis', function (req, res) {
         } else {
             response.FaceDetails.forEach(data => {
                 let low = data.AgeRange.Low
+                var vars = []
                 let high = data.AgeRange.High
                 console.log(`The detected face is between: ${low} and ${high} years old`)
                 console.log("EStos son los atributos que tenes acceder y mostrar papu:")
                 console.log(`  Age.Range.Low:          ${data.AgeRange.Low} - ${data.AgeRange.High}`)
-                data_response.ageRange = `${data.AgeRange.Low} - ${data.AgeRange.High}`
+                //data_response.ageRange = `${data.AgeRange.Low} - ${data.AgeRange.High}`
+                var it1 = {'ageRange': `${data.AgeRange.Low} - ${data.AgeRange.High}`}
                 console.log(`  Gender.Confidence:      ${data.Gender.Value}`)
                 console.log(`  Gender.Confidence:      ${data.Gender.Confidence}`)
-                data_response.Gender = data.Gender.Value
+                //data_response.Gender = data.Gender.Value
+                var it2 = {'Gender': data.Gender.Value}
+                vars.push(it1)
+                vars.push(it2)
                 if (data.Smile.Value) {
                     console.log(`  Smile.Confidence:       ${data.Smile.Confidence}`)
-                    data_response.Smile = "Smile"
+                    //data_response.Smile = "True"
+                    var it = {'Smile': "True"}
+                    vars.push(it)
+                }
+                else if (!data.Smile.Value) {
+                    //data_response.Smile = "False"
+                    var it = {'Smile': "False"}
+                    vars.push(it)
                 }
                 if (data.Eyeglasses.Value) {
                     console.log(`  Eyeglasses.Confidence:  ${data.Eyeglasses.Confidence}`)
-                    data_response.Eyeglasses = "Eyeglasses"
+                    //data_response.Eyeglasses = "True"
+                    var it = {'Eyeglasses': "True"}
+                    vars.push(it)
+                }
+                else if (!data.Eyeglasses.Value) {
+                    //data_response.Eyeglasses = "False"
+                    var it = {'Eyeglasses': "False"}
+                    vars.push(it)
                 }
                 if (data.Sunglasses.Value) {
                     console.log(`  Sunglasses.Confidence:  ${data.Sunglasses.Confidence}`)
-                    data_response.Sunglasses = "Sunglasses"
+                    //data_response.Sunglasses = "True"
+                    var it = {'Sunglasses': "True"}
+                    vars.push(it)
+                }
+                else if (!data.Sunglasses.Value) {
+                    //data_response.Sunglasses = "False"
+                    var it = {'Sunglasses': "False"}
+                    vars.push(it)
                 }
                 if (data.Beard.Value) {
                     console.log(`  Beard.Confidence:       ${data.Beard.Confidence}`)
-                    data_response.Beard = "Beard"
+                    //data_response.Beard = "True"
+                    var it = {'Beard': "True"}
+                    vars.push(it)
+                }
+                else if (!data.Beard.Value) {
+                    //data_response.Beard = "False"
+                    var it = {'Beard': "False"}
+                    vars.push(it)
                 }
                 if (data.Mustache.Value) {
                     console.log(`  Mustache.Confidence:    ${data.Mustache.Confidence}`)
-                    data_response.Mustache = "Mustache"
+                    //data_response.Mustache = "True"
+                    var it = {'Mustache': "True"}
+                    vars.push(it)
+                }
+                else if (!data.Mustache.Value) {
+                    //data_response.Mustache = "False"
+                    var it = {'Mustache': "False"}
+                    vars.push(it)
                 }
                 if (data.EyesOpen.Value) {
                     console.log(`  EyesOpen.Confidence:    ${data.EyesOpen.Confidence}`)
-                    data_response.EyesOpen = "EyesOpen"
+                    //data_response.EyesOpen = "True"
+                    var it = {'EyesOpen': "True"}
+                    vars.push(it)
+                }
+                else if (!data.EyesOpen.Value) {
+                    //data_response.EyesOpen = "False"
+                    var it = {'EyesOpen': "False"}
+                    vars.push(it)
                 }
                 if (data.MouthOpen.Value) {
                     console.log(`  MouthOpen.Confidence:   ${data.MouthOpen.Confidence}`)
-                    data_response.MouthOpen = "MouthOpen"
+                    //data_response.MouthOpen = "True"
+                    var it = {'MouthOpen': "True"}
+                    vars.push(it)
+                }
+                else if (!data.MouthOpen.Value) {
+                    //data_response.MouthOpen = "False"
+                    var it = {'MouthOpen': "False"}
+                    vars.push(it)
                 }
                 var Emotions = []
                 for (var i = 0; i < data.Emotions.length; i++) {
@@ -728,6 +782,7 @@ app.post('/profileAnalysis', function (req, res) {
                         Emotions.push(item);
                     }
                 }
+                data_response.Vars = vars
                 data_response.Emotions = Emotions
                 console.log("------------")
                 console.log("")
